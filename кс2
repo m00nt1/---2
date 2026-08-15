@@ -1,0 +1,122 @@
+class ChemicalElement:
+    """Базовый класс для химических элементов."""
+    def __init__(self, symbol: str, name: str, atomic_number: int, atomic_mass: float):
+        self.symbol = symbol
+        self.name = name
+        self.atomic_number = atomic_number
+        self.atomic_mass = atomic_mass
+
+    def describe(self) -> str:
+        """Возвращает строку с основными свойствами элемента."""
+        return f"{self.name} ({self.symbol}): Z={self.atomic_number}, масса={self.atomic_mass} а.е.м."
+
+    def is_metal(self) -> bool:
+        """
+        Определяет, является ли элемент металлом.
+        В базовом классе метод не реализован и требует переопределения.
+        """
+        raise NotImplementedError("Подкласс должен реализовать метод is_metal()")
+
+    def reactivity(self) -> str:
+        """Возвращает описание химической активности элемента (по умолчанию неизвестно)."""
+        return "Неизвестная реакционная способность"
+
+
+class Metal(ChemicalElement):
+    """Производный класс для металлов."""
+    def __init__(self, symbol: str, name: str, atomic_number: int, atomic_mass: float,
+                 conductivity: float, hardness: float):
+        super().__init__(symbol, name, atomic_number, atomic_mass)
+        self.conductivity = conductivity      # электропроводность (См/м)
+        self.hardness = hardness              # твёрдость по шкале Мооса
+
+    def is_metal(self) -> bool:
+        return True
+
+    def describe(self) -> str:
+        base = super().describe()              # вызов метода базового класса
+        return (f"{base}\n"
+                f"  Металл: проводимость={self.conductivity:.1e} См/м, "
+                f"твёрдость={self.hardness} Мооса")
+
+    def reactivity(self) -> str:
+        return "Обычно реакционноспособен, отдаёт электроны"
+
+
+class AlkaliMetal(Metal):
+    """Производный класс для щелочных металлов (наследует Metal)."""
+    def __init__(self, symbol: str, name: str, atomic_number: int, atomic_mass: float,
+                 conductivity: float, hardness: float, flame_color: str):
+        super().__init__(symbol, name, atomic_number, atomic_mass, conductivity, hardness)
+        self.flame_color = flame_color        # цвет пламени
+
+    def reactivity(self) -> str:
+        return "Чрезвычайно активен, бурно реагирует с водой, образует ионы +1"
+
+    def describe(self) -> str:
+        base = super().describe()              # вызов Metal.describe(), а тот — ChemicalElement.describe()
+        return f"{base}\n  Щелочной металл: цвет пламени — {self.flame_color}"
+
+
+class NobleGas(ChemicalElement):
+    """Производный класс для благородных газов."""
+    def __init__(self, symbol: str, name: str, atomic_number: int, atomic_mass: float,
+                 boiling_point: float):
+        super().__init__(symbol, name, atomic_number, atomic_mass)
+        self.boiling_point = boiling_point    # температура кипения (K)
+
+    def is_metal(self) -> bool:
+        return False
+
+    def reactivity(self) -> str:
+        return "Инертен, очень низкая реакционная способность"
+
+    def describe(self) -> str:
+        base = super().describe()
+        return f"{base}\n  Благородный газ: температура кипения={self.boiling_point} K"
+
+
+def print_element_info(elem: ChemicalElement) -> None:
+    """
+    Функция, демонстрирующая полиморфную работу с объектами разных классов.
+    Принимает любой объект, наследующий ChemicalElement.
+    """
+    print(elem.describe())
+    print(f"Реакционная способность: {elem.reactivity()}")
+
+    # Безопасно вызываем is_metal с обработкой NotImplementedError
+    try:
+        classification = "металл" if elem.is_metal() else "неметалл"
+    except NotImplementedError:
+        classification = "неизвестно (метод не реализован)"
+    print(f"Классификация: {classification}")
+    print("-" * 50)
+
+
+if __name__ == "__main__":
+    # Создаём экземпляры различных классов
+    iron = Metal("Fe", "Железо", 26, 55.845, 1.0e7, 4.0)
+    sodium = AlkaliMetal("Na", "Натрий", 11, 22.990, 2.1e7, 0.5, "жёлтый")
+    helium = NobleGas("He", "Гелий", 2, 4.0026, 4.22)
+    neon = NobleGas("Ne", "Неон", 10, 20.1797, 27.07)
+
+    # Экземпляр базового класса (is_metal не реализован)
+    unknown = ChemicalElement("X", "Неизвестный", 0, 0.0)
+
+    elements = [iron, sodium, helium, neon, unknown]
+
+    # Демонстрация работы методов через цикл
+    print("=== Демонстрация полиморфизма ===")
+    for elem in elements:
+        print_element_info(elem)
+
+    # Проверка наследования и принадлежности классам
+    print("\n=== Проверка isinstance() ===")
+    print(f"iron является Metal: {isinstance(iron, Metal)}")
+    print(f"iron является ChemicalElement: {isinstance(iron, ChemicalElement)}")
+    print(f"sodium является AlkaliMetal: {isinstance(sodium, AlkaliMetal)}")
+    print(f"sodium является Metal: {isinstance(sodium, Metal)}")
+    print(f"helium является NobleGas: {isinstance(helium, NobleGas)}")
+    print(f"helium является Metal: {isinstance(helium, Metal)}")
+    print(f"unknown является ChemicalElement: {isinstance(unknown, ChemicalElement)}")
+    print(f"unknown является Metal: {isinstance(unknown, Metal)}")
